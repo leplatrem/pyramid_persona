@@ -23,15 +23,26 @@ def verify_login(request):
     return data['email']
 
 
+def add_csrf_token(request):
+    """Provides the CSRF token in HTTP headers."""
+    csrf_token = str(request.session.get_csrf_token())
+    request.response.headers['X-Csrf-Token'] = csrf_token
+    return csrf_token
+
+
 def login(request):
     """View to check the persona assertion and remember the user"""
-    email = verify_login(request)
-    request.response.headers.extend(remember(request, email))
-    return {'redirect': request.POST.get('came_from', '/'), 'success': True}
+    add_csrf_token(request)
+    if request.method == 'POST':
+        email = verify_login(request)
+        request.response.headers.extend(remember(request, email))
+        return {'redirect': request.POST.get('came_from', '/'), 'success': True}
+    return {}
 
 
 def logout(request):
     """View to forget the user"""
+    add_csrf_token(request)
     request.response.headers.extend(forget(request))
     return {'redirect': request.POST.get('came_from', '/')}
 

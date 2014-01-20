@@ -25,6 +25,7 @@ class ViewTests(unittest.TestCase):
         assertion = data['assertion']
 
         request = testing.DummyRequest()
+        request.method = 'POST'
         request.params['assertion'] = assertion
         request.params['csrf_token'] = request.session.get_csrf_token()
         request.params['came_from'] = '/'
@@ -40,6 +41,7 @@ class ViewTests(unittest.TestCase):
         assertion = data['assertion']
 
         request = testing.DummyRequest()
+        request.method = 'POST'
         request.params['assertion'] = assertion
         request.params['csrf_token'] = request.session.get_csrf_token()
 
@@ -58,12 +60,25 @@ class ViewTests(unittest.TestCase):
         assertion = data['assertion']
 
         request = testing.DummyRequest()
+        request.method = 'POST'
         request.params['assertion'] = assertion
         request.params['csrf_token'] = request.session.get_csrf_token()
         request.params['came_from'] = '/'
 
         self.assertRaises(HTTPBadRequest, login, request)
         self.assertFalse(hasattr(self.security_policy, 'remembered'))
+
+    def test_login_logout_views_provide_csrf_token(self):
+        from .views import login, logout
+        request = testing.DummyRequest()
+        login(request)
+        self.assertEqual(request.response.headers['X-Csrf-Token'],
+                         request.session.get_csrf_token())
+
+        request = testing.DummyRequest()
+        logout(request)
+        self.assertEqual(request.response.headers['X-Csrf-Token'],
+                         request.session.get_csrf_token())
 
     def test_logout(self):
         from .views import logout
@@ -107,6 +122,7 @@ class RenderingTests(unittest.TestCase):
         assertion = data['assertion']
 
         request = testing.DummyRequest()
+        request.method = 'POST'
         request.environ['HTTP_HOST'] = 'http://someaudience'
         request.params['assertion'] = assertion
         request.params['csrf_token'] = request.session.get_csrf_token()
